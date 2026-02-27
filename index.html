@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toy assembly · frontend UI</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
+        body { background: #f5f7fa; display: flex; justify-content: center; padding: 2rem 1rem; margin: 0; }
+        .container { max-width: 1000px; width: 100%; background: white; border-radius: 24px; box-shadow: 0 12px 30px rgba(0,0,0,0.1); padding: 2rem; }
+        h1 { font-size: 1.6rem; margin-top: 0; font-weight: 600; letter-spacing: -0.5px; display: flex; gap: 0.5rem; align-items: center; }
+        h1 span { background: #2d3e50; color: white; font-size: 0.8rem; padding: 0.2rem 0.8rem; border-radius: 30px; font-weight: 400; }
+        .io-grid { display: flex; flex-wrap: wrap; gap: 1.5rem; margin: 1.5rem 0; }
+        .x-panel { background: #eaf2f8; padding: 1rem 1.5rem; border-radius: 20px; flex: 2; min-width: 260px; }
+        .y-panel { background: #fef6e0; padding: 1rem 1.5rem; border-radius: 20px; flex: 1; min-width: 160px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .x-row { display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; align-items: center; }
+        .x-field { display: flex; align-items: center; gap: 0.4rem; }
+        .x-field label { font-weight: 700; width: 30px; color: #1f3a4b; }
+        .x-field input { width: 70px; padding: 0.3rem 0.5rem; border: 2px solid #b6d0e2; border-radius: 12px; font-weight: 600; text-align: center; background: white; }
+        .y-value { font-size: 4rem; font-weight: 800; line-height: 1; color: #c45d00; margin: 0.2rem 0; }
+        .y-label { font-size: 1rem; color: #7a4b1f; background: #ffeec2; padding: 0.2rem 1rem; border-radius: 30px; }
+        .editor-panel { background: #1e2b36; border-radius: 24px; padding: 1.2rem; margin: 1.8rem 0 1.5rem; box-shadow: inset 0 0 0 1px #4e6070; }
+        textarea { width: 100%; min-height: 200px; background: #1e2b36; color: #e3f2fd; border: none; font-size: 1rem; line-height: 1.5; padding: 1rem; resize: vertical; border-radius: 18px; outline: 1px solid #3f5565; font-family: 'Courier New', monospace; }
+        textarea:focus { outline: 2px solid #7aa3c2; background: #233340; }
+        .label-hint { color: #9cbad5; font-size: 0.8rem; margin-top: 0.3rem; margin-left: 0.5rem; }
+        .button-bar { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; margin: 0 0 1.2rem 0; }
+        .btn { background: white; border: 2px solid #2d4b65; padding: 0.6rem 1.5rem; border-radius: 40px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: 0.1s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
+        .btn.primary { background: #2d4b65; color: white; border-color: #1f374b; }
+        .btn.warning { background: #ffd966; border-color: #b38f40; }
+        .btn:active { transform: scale(0.97); }
+        .btn:disabled { opacity: 0.4; pointer-events: none; }
+        .status { background: #dde2e8; padding: 0.7rem 1.2rem; border-radius: 40px; font-size: 1rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; }
+        .pc-badge { background: #0f1c27; color: white; padding: 0.2rem 1rem; border-radius: 30px; font-weight: 700; }
+        .counter { font-weight: 600; color: #17334b; }
+        .warning-msg { color: #a12d2d; font-weight: 500; background: #ffe1de; padding: 0.2rem 1rem; border-radius: 30px; }
+        .step-limit { font-size: 0.9rem; background: #d4dfe9; padding: 0.3rem 1rem; border-radius: 30px; }
+        footer { font-size: 0.8rem; color: #7b8c9d; text-align: right; margin-top: 1.5rem; border-top: 1px dashed #b5c8d9; padding-top: 1rem; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔣 TOY ASSEMBLY <span>X₁ X₂ … / Z₁ Z₂ … / Y</span></h1>
+
+    <!-- Input & output panel -->
+    <div class="io-grid">
+        <div class="x-panel">
+            <div style="font-weight:700; margin-bottom:0.8rem;">📥 INPUT X₁ X₂ …</div>
+            <div class="x-row" id="x-inputs-container">
+                <!-- dynamic X inputs will be injected -->
+            </div>
+            <div style="margin-top: 0.8rem; color: #3f5e7a; font-size:0.9rem;">(add more by typing X3, X4 etc in code)</div>
+        </div>
+        <div class="y-panel">
+            <div class="y-label">output Y</div>
+            <div class="y-value" id="y-display">0</div>
+            <div style="font-size:0.9rem;">⬅ last halted value</div>
+        </div>
+    </div>
+
+    <!-- code editor -->
+    <div class="editor-panel">
+        <textarea id="codeArea" placeholder="; One instruction per line
+; labels: [A1] X ← X + 1   (or <)
+; IF X != 0 GOTO B2
+
+[A]   X < X + 1      ; increment X
+      IF X != 0 GOTO A
+">[A]   X < X + 1
+      IF X != 0 GOTO A</textarea>
+        <div class="label-hint">⏺ Labels: A1..E5  (A = A1) · Variables: X, X1, X2... Z, Z1, Z2... · Use < for ←, != or =/= for ≠</div>
+    </div>
+
+    <!-- control buttons -->
+    <div class="button-bar">
+        <button class="btn" id="resetProgramBtn">⟲ reset & load</button>
+        <button class="btn primary" id="runBtn">▶ run (max 1000 steps)</button>
+        <button class="btn" id="stepBtn">▷ step</button>
+        <button class="btn warning" id="clearStateBtn">✕ clear Z & Y (keep X)</button>
+        <span style="flex:1"></span>
+        <span class="step-limit" id="stepCounterDisplay">steps: 0 / 1000</span>
+    </div>
+
+    <!-- status + PC -->
+    <div class="status" id="statusArea">
+        <span class="pc-badge" id="pcLabel">PC: —</span>
+        <span id="message" class="counter">Ready. Reset or run.</span>
+        <span id="warningMsg" class="warning-msg"></span>
+    </div>
+    <footer>✔ Halt: past last instruction / GOTO missing label · step limit 1000</footer>
+</div>
+
+<!-- Link to external backend (JavaScript) -->
+<script src="interpreter-backend.js"></script>
+</body>
+</html>
