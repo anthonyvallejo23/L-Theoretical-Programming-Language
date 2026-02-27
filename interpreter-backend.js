@@ -8,7 +8,7 @@
     // ----- central state -----
     let sourceLines = [];               // raw lines (string)
     let parsedInstructions = [];         // array of {lineNum, origLine, label, op, varName, targetLabel?}
-    let labelToLine = new Map();         // label string -> line index (0‑based)
+    let labelToLine = new Map();         // label string -> line index (0‑based) – supports any label
 
     // variable stores
     let X = new Map();    // key: 'X1','X2'...   (X internally stored as 'X1')
@@ -29,6 +29,7 @@
     const warningMsgSpan = document.getElementById('warningMsg');
     const stepCounterSpan = document.getElementById('stepCounterDisplay');
     const xContainer = document.getElementById('x-inputs-container');
+    const lineHighlightSpan = document.getElementById('lineHighlight');
 
     // ---------- helper: rebuild X inputs from X map ----------
     function rebuildXInputs() {
@@ -89,15 +90,11 @@
         return v;   // X2, Z3 etc
     }
 
+    // normalize label: we keep as-is (any alphanumeric, but common pattern A1, B2, ...)
+    // we no longer force A→A1; we accept any label exactly as written (case‑insensitive uppercase)
     function normalizeLabel(l) {
         if (!l) return l;
-        l = l.toUpperCase();
-        if (l === 'A') return 'A1';
-        if (l === 'B') return 'B1';
-        if (l === 'C') return 'C1';
-        if (l === 'D') return 'D1';
-        if (l === 'E') return 'E1';
-        return l;
+        return l.toUpperCase();  // just uppercase, no default subscript
     }
 
     // ---------- variable access ----------
@@ -131,7 +128,8 @@
             }
 
             let label = null;
-            const labelMatch = line.match(/^\s*\[([A-E][1-9]?)\]\s*(.*)/);
+            // label pattern: any word inside brackets, e.g. [A1], [LOOP], [X99] – but we restrict to common style: letters and digits
+            const labelMatch = line.match(/^\s*\[([A-Za-z][A-Za-z0-9]*)\]\s*(.*)/);
             if (labelMatch) {
                 label = normalizeLabel(labelMatch[1]);
                 line = labelMatch[2].trim();
@@ -141,14 +139,17 @@
             let varName = null;
             let targetLabel = null;
 
-            const ifMatch = line.match(/^IF\s+([A-Z][0-9]*)\s*(!=|=\/=|≠)\s*0\s+GOTO\s+([A-E][1-9]?)$/i);
+            // IF ... GOTO ...
+            const ifMatch = line.match(/^IF\s+([A-Z][0-9]*)\s*(!=|=\/=|≠)\s*0\s+GOTO\s+([A-Za-z][A-Za-z0-9]*)$/i);
             if (ifMatch) {
                 op = 'IF';
                 varName = normalizeVar(ifMatch[1]);
                 targetLabel = normalizeLabel(ifMatch[3]);
             } else {
-                const incMatch = line.match(/^([A-Z][0-9]*)\s*(<|←)\s*\1\s*\+\s*1$/);
-                const decMatch = line.match(/^([A-Z][0-9]*)\s*(<|←)\s*\1\s*-\s*1$/);
+                // increment/decrement: allow <- and < and ←
+                // pattern: V ARROW V + 1  or V ARROW V - 1
+                const incMatch = line.match(/^([A-Z][0-9]*)\s*(<-|←|<)\s*\1\s*\+\s*1$/);
+                const decMatch = line.match(/^([A-Z][0-9]*)\s*(<-|←|<)\s*\1\s*-\s*1$/);
                 if (incMatch) {
                     op = 'INC';
                     varName = normalizeVar(incMatch[1]);
@@ -230,6 +231,7 @@
         if (stepsExecuted >= MAX_STEPS) {
             halted = true;
             haltReason = `step limit (${MAX_STEPS}) reached`;
+            alert(`⚠️ Step limit of ${MAX_STEPS} reached. Execution halted.`);
             updateStatusAndY();
             return { halted: true, reason: haltReason };
         }
@@ -295,6 +297,14 @@
         }
         warningMsgSpan.textContent = halted ? haltReason : '';
 
+        // highlight next line (if valid)
+        if (!halted && PC < parsedInstructions.length && parsedInstructions[PC] !== null) {
+            const nextLineNum = parsedInstructions[PC].lineNum + 1; // display 1‑based
+            lineHighlightSpan.textContent = `next line: ${nextLineNum}`;
+        } else {
+            lineHighlightSpan.textContent = `next line: —`;
+        }
+
         // sync X fields with current X map values
         rebuildXInputs();
     }
@@ -330,7 +340,26 @@
         while (!halted && stepsExecuted < MAX_STEPS) {
             stepOnce();
         }
+        // if stopped due to step limit, we already showed alert in stepOnce
         updateStatusAndY();
+    });
+
+    // ---------- Add new X variable button ----------
+    document.getElementById('addXBtn').addEventListener('click', () => {
+        // find the largest current X index
+        let max = 0;
+        for (let key of X.keys()) {
+            if (key.startsWith('X')) {
+                const num = parseInt(key.substring(1));
+                if (!isNaN(num) && num > max) max = num;
+            }
+        }
+        const newNum = max + 1;
+        const newKey = 'X' + newNum;
+        if (!X.has(newKey)) {
+            X.set(newKey, 0);
+        }
+        rebuildXInputs();
     });
 
     // initial load
