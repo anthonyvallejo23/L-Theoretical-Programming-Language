@@ -13,6 +13,9 @@
         .io-grid { display: flex; flex-wrap: wrap; gap: 1.5rem; margin: 1.5rem 0; }
         .x-panel { background: #eaf2f8; padding: 1rem 1.5rem; border-radius: 20px; flex: 2; min-width: 260px; }
         .y-panel { background: #fef6e0; padding: 1rem 1.5rem; border-radius: 20px; flex: 1; min-width: 160px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .x-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem; flex-wrap: wrap; gap: 0.5rem; }
+        .x-header button { background: #2d4b65; border: none; color: white; border-radius: 30px; padding: 0.3rem 1rem; font-weight: 600; cursor: pointer; font-size: 0.9rem; border: 1px solid #1f374b; }
+        .x-header button:hover { background: #1f374b; }
         .x-row { display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; align-items: center; }
         .x-field { display: flex; align-items: center; gap: 0.4rem; }
         .x-field label { font-weight: 700; width: 30px; color: #1f3a4b; }
@@ -35,6 +38,9 @@
         .warning-msg { color: #a12d2d; font-weight: 500; background: #ffe1de; padding: 0.2rem 1rem; border-radius: 30px; }
         .step-limit { font-size: 0.9rem; background: #d4dfe9; padding: 0.3rem 1rem; border-radius: 30px; }
         footer { font-size: 0.8rem; color: #7b8c9d; text-align: right; margin-top: 1.5rem; border-top: 1px dashed #b5c8d9; padding-top: 1rem; }
+
+        /* line highlight in textarea is tricky, we'll use a separate indicator */
+        .execution-line-indicator { background: #2f4d2f; color: #b9f5b9; padding: 0.2rem 1rem; border-radius: 30px; font-weight: 600; border: 1px solid #6ea86e; }
     </style>
 </head>
 <body>
@@ -44,11 +50,14 @@
     <!-- Input & output panel -->
     <div class="io-grid">
         <div class="x-panel">
-            <div style="font-weight:700; margin-bottom:0.8rem;">📥 INPUT X₁ X₂ …</div>
+            <div class="x-header">
+                <span style="font-weight:700;">📥 INPUT X₁ X₂ …</span>
+                <button id="addXBtn" title="Add a new X variable (e.g., X5)">+ Add X</button>
+            </div>
             <div class="x-row" id="x-inputs-container">
                 <!-- dynamic X inputs will be injected -->
             </div>
-            <div style="margin-top: 0.8rem; color: #3f5e7a; font-size:0.9rem;">(add more by typing X3, X4 etc in code)</div>
+            <div style="margin-top: 0.8rem; color: #3f5e7a; font-size:0.9rem;">(click +Add X to create new inputs)</div>
         </div>
         <div class="y-panel">
             <div class="y-label">output Y</div>
@@ -60,14 +69,15 @@
     <!-- code editor -->
     <div class="editor-panel">
         <textarea id="codeArea" placeholder="; One instruction per line
-; labels: [A1] X ← X + 1   (or <)
+; labels: A1, B1, C1, ... (any number)
+; [A1] X <- X + 1   (or ← or <)
 ; IF X != 0 GOTO B2
 
-[A]   X < X + 1      ; increment X
-      IF X != 0 GOTO A
-">[A]   X < X + 1
-      IF X != 0 GOTO A</textarea>
-        <div class="label-hint">⏺ Labels: A1..E5  (A = A1) · Variables: X, X1, X2... Z, Z1, Z2... · Use < for ←, != or =/= for ≠</div>
+[A1]   X <- X + 1
+      IF X != 0 GOTO A1
+">[A1]   X <- X + 1
+      IF X != 0 GOTO A1</textarea>
+        <div class="label-hint">⏺ Labels: A1, B1, C1 ... (any) · Use &lt;- or &lt; or ← for assignment · != or =/= for ≠</div>
     </div>
 
     <!-- control buttons -->
@@ -80,13 +90,14 @@
         <span class="step-limit" id="stepCounterDisplay">steps: 0 / 1000</span>
     </div>
 
-    <!-- status + PC -->
+    <!-- status + PC + line highlight -->
     <div class="status" id="statusArea">
         <span class="pc-badge" id="pcLabel">PC: —</span>
         <span id="message" class="counter">Ready. Reset or run.</span>
         <span id="warningMsg" class="warning-msg"></span>
+        <span id="lineHighlight" class="execution-line-indicator">next line: —</span>
     </div>
-    <footer>✔ Halt: past last instruction / GOTO missing label · step limit 1000</footer>
+    <footer>✔ Halt: past last instruction / GOTO missing label · step limit 1000 (alert)</footer>
 </div>
 
 <!-- Link to external backend (JavaScript) -->
