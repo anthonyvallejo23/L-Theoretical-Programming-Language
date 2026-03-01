@@ -6,31 +6,104 @@
     <title>Toy assembly · frontend UI</title>
     <style>
         * { box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
+        
+        :root {
+            --bg-color: #f5f7fa;
+            --container-bg: white;
+            --text-color: inherit;
+            --panel-x-bg: #eaf2f8;
+            --panel-y-bg: #fef6e0;
+            --panel-z-bg: #e0e8f0;
+            --panel-macro-bg: #f0e6d5;
+            --panel-macro-header: #e6d8c0;
+            --border-color: #2d4b65;
+            --accent-color: #2d4b65;
+            --accent-text: white;
+            --input-bg: white;
+            --input-border: #b6d0e2;
+            --input-text: inherit;
+            --y-value: #c45d00;
+            --badge-bg: #2d4b65;
+            --badge-text: white;
+            --badge-span-bg: #ffd966;
+            --badge-span-text: #1f374b;
+            --status-bg: #dde2e8;
+            --pc-badge-bg: #0f1c27;
+            --pc-badge-text: white;
+            --warning-bg: #ffe1de;
+            --warning-text: #a12d2d;
+            --step-limit-bg: #d4dfe9;
+            --footer-color: #7b8c9d;
+            --footer-border: #b5c8d9;
+            --editor-panel-bg: #1e2b36;
+            --editor-text: #e3f2fd;
+            --editor-outline: #3f5565;
+            --line-highlight-bg: #2f4d2f;
+            --line-highlight-text: #b9f5b9;
+            --line-highlight-border: #6ea86e;
+            --toggle-bg: #f0f0f0;
+            --toggle-text: #2d4b65;
+            --toggle-slider-bg: #ccc;
+        }
+
+        :root.dark-mode {
+            --bg-color: #1a2632;
+            --container-bg: #2d3e4f;
+            --text-color: #e0e0e0;
+            --panel-x-bg: #2f4055;
+            --panel-y-bg: #4a4133;
+            --panel-z-bg: #364959;
+            --panel-macro-bg: #4d4232;
+            --panel-macro-header: #5f513c;
+            --border-color: #ffd966;
+            --accent-color: #ffd966;
+            --accent-text: #1f374b;
+            --input-bg: #4a5a6e;
+            --input-border: #ffd966;
+            --input-text: white;
+            --y-value: #ffb347;
+            --badge-bg: #ffd966;
+            --badge-text: #1f374b;
+            --badge-span-bg: #2d4b65;
+            --badge-span-text: white;
+            --status-bg: #3a5068;
+            --pc-badge-bg: #1f374b;
+            --pc-badge-text: #ffd966;
+            --warning-bg: #5a3a3a;
+            --warning-text: #ffb0a0;
+            --step-limit-bg: #4a5a6e;
+            --footer-color: #b0c4d9;
+            --footer-border: #5a6f84;
+            --editor-panel-bg: #15222e;
+            --editor-text: #ffebcd;
+            --editor-outline: #ffd966;
+            --line-highlight-bg: #1e4a1e;
+            --line-highlight-text: #d0f0d0;
+            --line-highlight-border: #ffd966;
+            --toggle-bg: #3a5068;
+            --toggle-text: #ffd966;
+            --toggle-slider-bg: #ffd966;
+        }
+
         body {
-            background: #f5f7fa;
+            background: var(--bg-color);
             display: flex;
             justify-content: center;
             padding: 2rem 1rem;
             margin: 0;
             transition: background-color 0.3s ease, color 0.3s ease;
+            color: var(--text-color);
         }
-        body.dark-mode {
-            background: #1a2632;
-            color: #e0e0e0;
-        }
+        
         .container {
             max-width: 1100px;
             width: 100%;
-            background: white;
+            background: var(--container-bg);
             border-radius: 24px;
             box-shadow: 0 12px 30px rgba(0,0,0,0.1);
             padding: 2rem;
             transition: background-color 0.3s ease, box-shadow 0.3s ease;
             position: relative;
-        }
-        body.dark-mode .container {
-            background: #2d3e4f;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.5);
         }
         
         /* Dark mode toggle */
@@ -41,36 +114,26 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            background: #f0f0f0;
+            background: var(--toggle-bg);
             padding: 5px 12px;
             border-radius: 40px;
-            border: 2px solid #2d4b65;
+            border: 2px solid var(--border-color);
             cursor: pointer;
             transition: all 0.3s ease;
             z-index: 10;
         }
-        body.dark-mode .dark-mode-toggle {
-            background: #3a5068;
-            border-color: #ffd966;
-        }
         .dark-mode-toggle span {
             font-size: 0.9rem;
             font-weight: 600;
-            color: #2d4b65;
-        }
-        body.dark-mode .dark-mode-toggle span {
-            color: #ffd966;
+            color: var(--toggle-text);
         }
         .toggle-slider {
             width: 40px;
             height: 20px;
-            background: #ccc;
+            background: var(--toggle-slider-bg);
             border-radius: 20px;
             position: relative;
             transition: background 0.3s ease;
-        }
-        body.dark-mode .toggle-slider {
-            background: #ffd966;
         }
         .toggle-slider::before {
             content: '';
@@ -83,7 +146,7 @@
             left: 2px;
             transition: transform 0.3s ease;
         }
-        body.dark-mode .toggle-slider::before {
+        :root.dark-mode .toggle-slider::before {
             transform: translateX(20px);
         }
         
@@ -93,12 +156,9 @@
             bottom: 15px;
             right: 25px;
             font-size: 0.8rem;
-            color: #7b8c9d;
+            color: var(--footer-color);
             font-style: italic;
             z-index: 5;
-        }
-        body.dark-mode .credits {
-            color: #b0c4d9;
         }
         
         h1 {
@@ -112,26 +172,22 @@
             padding-right: 120px; /* space for dark mode toggle */
         }
         h1 span { background: #2d3e50; color: white; font-size: 0.8rem; padding: 0.2rem 0.8rem; border-radius: 30px; font-weight: 400; }
-        body.dark-mode h1 span { background: #ffd966; color: #1f374b; }
+        :root.dark-mode h1 span { background: #ffd966; color: #1f374b; }
         
         .io-grid { display: flex; flex-wrap: wrap; gap: 1.5rem; margin: 1.5rem 0; }
-        .x-panel { background: #eaf2f8; padding: 1rem 1.5rem; border-radius: 20px; flex: 2; min-width: 260px; transition: background 0.3s ease; }
-        body.dark-mode .x-panel { background: #2f4055; color: #e0e0e0; }
-        .y-panel { background: #fef6e0; padding: 1rem 1.5rem; border-radius: 20px; flex: 1; min-width: 160px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: background 0.3s ease; }
-        body.dark-mode .y-panel { background: #4a4133; color: #ffeec2; }
-        .z-panel { background: #e0e8f0; padding: 1rem 1.5rem; border-radius: 20px; flex: 1.5; min-width: 220px; margin-top: 0.5rem; transition: background 0.3s ease; }
-        body.dark-mode .z-panel { background: #364959; color: #e0e0e0; }
+        .x-panel { background: var(--panel-x-bg); padding: 1rem 1.5rem; border-radius: 20px; flex: 2; min-width: 260px; transition: background 0.3s ease; }
+        .y-panel { background: var(--panel-y-bg); padding: 1rem 1.5rem; border-radius: 20px; flex: 1; min-width: 160px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: background 0.3s ease; }
+        .z-panel { background: var(--panel-z-bg); padding: 1rem 1.5rem; border-radius: 20px; flex: 1.5; min-width: 220px; margin-top: 0.5rem; transition: background 0.3s ease; }
         
         .macro-panel {
-            background: #f0e6d5;
+            background: var(--panel-macro-bg);
             border-radius: 20px;
             margin: 1rem 0 0 0;
             border: 2px solid #d4b68a;
             overflow: hidden;
             transition: background 0.3s ease, border-color 0.3s ease;
         }
-        body.dark-mode .macro-panel {
-            background: #4d4232;
+        :root.dark-mode .macro-panel {
             border-color: #b38f40;
         }
         
@@ -140,17 +196,13 @@
             align-items: center; 
             gap: 0.8rem; 
             padding: 1rem 1.5rem;
-            background: #e6d8c0;
+            background: var(--panel-macro-header);
             cursor: pointer;
             user-select: none;
             transition: background 0.2s, background-color 0.3s ease;
         }
-        body.dark-mode .macro-header {
-            background: #5f513c;
-            color: #ffebcd;
-        }
         .macro-header:hover { background: #dccbab; }
-        body.dark-mode .macro-header:hover { background: #6f614a; }
+        :root.dark-mode .macro-header:hover { background: #6f614a; }
         .macro-header .arrow { 
             font-size: 1.2rem; 
             transition: transform 0.3s ease;
@@ -158,7 +210,7 @@
         }
         .macro-header .arrow.expanded { transform: rotate(90deg); }
         .macro-header span { font-weight: 700; font-size: 1.1rem; color: #5f4a2e; }
-        body.dark-mode .macro-header span { color: #ffebcd; }
+        :root.dark-mode .macro-header span { color: #ffebcd; }
         
         .macro-content {
             padding: 0 1.5rem 1rem 1.5rem;
@@ -175,9 +227,9 @@
         
         .x-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem; flex-wrap: wrap; gap: 0.5rem; }
         .x-header button {
-            background: #2d4b65;
+            background: var(--accent-color);
             border: none;
-            color: white;
+            color: var(--accent-text);
             border-radius: 30px;
             padding: 0.3rem 1rem;
             font-weight: 600;
@@ -186,39 +238,34 @@
             border: 1px solid #1f374b;
             transition: background 0.2s;
         }
-        .x-header button:hover { background: #1f374b; }
-        body.dark-mode .x-header button { background: #ffd966; color: #1f374b; border-color: #b38f40; }
-        body.dark-mode .x-header button:hover { background: #ffcc66; }
+        .x-header button:hover { background: #1f374b; color: white; }
+        :root.dark-mode .x-header button { border-color: #b38f40; }
+        :root.dark-mode .x-header button:hover { background: #ffcc66; color: #1f374b; }
         
         .x-row { display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; align-items: center; }
         .x-field { display: flex; align-items: center; gap: 0.4rem; }
         .x-field label { font-weight: 700; width: 30px; color: #1f3a4b; }
-        body.dark-mode .x-field label { color: #ffebcd; }
+        :root.dark-mode .x-field label { color: #ffebcd; }
         .x-field input {
             width: 70px;
             padding: 0.3rem 0.5rem;
-            border: 2px solid #b6d0e2;
+            border: 2px solid var(--input-border);
             border-radius: 12px;
             font-weight: 600;
             text-align: center;
-            background: white;
-            transition: background 0.3s ease, border-color 0.3s ease;
-        }
-        body.dark-mode .x-field input {
-            background: #4a5a6e;
-            border-color: #ffd966;
-            color: white;
+            background: var(--input-bg);
+            color: var(--input-text);
+            transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
         }
         
-        .y-value { font-size: 4rem; font-weight: 800; line-height: 1; color: #c45d00; margin: 0.2rem 0; }
-        body.dark-mode .y-value { color: #ffb347; }
+        .y-value { font-size: 4rem; font-weight: 800; line-height: 1; color: var(--y-value); margin: 0.2rem 0; }
         .y-label { font-size: 1rem; color: #7a4b1f; background: #ffeec2; padding: 0.2rem 1rem; border-radius: 30px; }
-        body.dark-mode .y-label { background: #5f4a2e; color: #ffebcd; }
+        :root.dark-mode .y-label { background: #5f4a2e; color: #ffebcd; }
         
         .z-container { display: flex; flex-wrap: wrap; gap: 0.8rem 1.2rem; align-items: center; }
         .z-badge {
-            background: #2d4b65;
-            color: white;
+            background: var(--badge-bg);
+            color: var(--badge-text);
             padding: 0.2rem 0.8rem;
             border-radius: 30px;
             font-weight: 600;
@@ -228,16 +275,14 @@
             gap: 0.3rem;
             transition: background 0.3s ease;
         }
-        body.dark-mode .z-badge { background: #ffd966; color: #1f374b; }
         .z-badge span {
-            background: #ffd966;
-            color: #1f374b;
+            background: var(--badge-span-bg);
+            color: var(--badge-span-text);
             padding: 0.1rem 0.5rem;
             border-radius: 20px;
             margin-left: 0.3rem;
             transition: background 0.3s ease, color 0.3s ease;
         }
-        body.dark-mode .z-badge span { background: #2d4b65; color: white; }
         
         .macro-switches { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; }
         .switch-item {
@@ -250,13 +295,13 @@
             border: 1px solid #e0b87b;
             transition: background 0.3s ease, border-color 0.3s ease;
         }
-        body.dark-mode .switch-item {
+        :root.dark-mode .switch-item {
             background: #4d4232;
             border-color: #b38f40;
             color: #ffebcd;
         }
         .switch-item label { font-weight: 700; color: #7a4f1a; }
-        body.dark-mode .switch-item label { color: #ffebcd; }
+        :root.dark-mode .switch-item label { color: #ffebcd; }
         .switch-item input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #b38f40; }
         
         .macro-example {
@@ -269,46 +314,40 @@
             border-radius: 30px;
             transition: background 0.3s ease, color 0.3s ease;
         }
-        body.dark-mode .macro-example {
+        :root.dark-mode .macro-example {
             background: #4d4232;
             color: #ffebcd;
         }
         
         .editor-panel {
-            background: #1e2b36;
+            background: var(--editor-panel-bg);
             border-radius: 24px;
             padding: 1.2rem;
             margin: 1.8rem 0 1.5rem;
             box-shadow: inset 0 0 0 1px #4e6070;
             transition: background 0.3s ease;
         }
-        body.dark-mode .editor-panel { background: #15222e; }
         
         textarea {
             width: 100%;
             min-height: 200px;
-            background: #1e2b36;
-            color: #e3f2fd;
+            background: var(--editor-panel-bg);
+            color: var(--editor-text);
             border: none;
             font-size: 1rem;
             line-height: 1.5;
             padding: 1rem;
             resize: vertical;
             border-radius: 18px;
-            outline: 1px solid #3f5565;
+            outline: 1px solid var(--editor-outline);
             font-family: 'Courier New', monospace;
             transition: background 0.3s ease, color 0.3s ease, outline-color 0.3s ease;
         }
-        body.dark-mode textarea {
-            background: #1a2632;
-            color: #ffebcd;
-            outline-color: #ffd966;
-        }
         textarea:focus { outline: 2px solid #7aa3c2; background: #233340; }
-        body.dark-mode textarea:focus { outline: 2px solid #ffd966; background: #1e2f3f; }
+        :root.dark-mode textarea:focus { outline: 2px solid #ffd966; background: #1e2f3f; }
         
         .label-hint { color: #9cbad5; font-size: 0.8rem; margin-top: 0.3rem; margin-left: 0.5rem; }
-        body.dark-mode .label-hint { color: #b0c4d9; }
+        :root.dark-mode .label-hint { color: #b0c4d9; }
         
         .button-bar {
             display: flex;
@@ -328,7 +367,7 @@
             transition: 0.1s ease, background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
             box-shadow: 0 2px 5px rgba(0,0,0,0.03);
         }
-        body.dark-mode .btn {
+        :root.dark-mode .btn {
             background: #3a5068;
             border-color: #ffd966;
             color: #ffebcd;
@@ -338,7 +377,7 @@
             color: white;
             border-color: #1f374b;
         }
-        body.dark-mode .btn.primary {
+        :root.dark-mode .btn.primary {
             background: #ffd966;
             color: #1f374b;
             border-color: #b38f40;
@@ -347,7 +386,7 @@
         .btn:disabled { opacity: 0.4; pointer-events: none; }
         
         .status {
-            background: #dde2e8;
+            background: var(--status-bg);
             padding: 0.7rem 1.2rem;
             border-radius: 40px;
             font-size: 1rem;
@@ -358,68 +397,54 @@
             margin-top: 0.5rem;
             transition: background 0.3s ease;
         }
-        body.dark-mode .status {
-            background: #3a5068;
-            color: #ffebcd;
-        }
         
         .pc-badge {
-            background: #0f1c27;
-            color: white;
+            background: var(--pc-badge-bg);
+            color: var(--pc-badge-text);
             padding: 0.2rem 1rem;
             border-radius: 30px;
             font-weight: 700;
             transition: background 0.3s ease;
         }
-        body.dark-mode .pc-badge { background: #1f374b; color: #ffd966; }
         
         .counter { font-weight: 600; color: #17334b; }
-        body.dark-mode .counter { color: #ffebcd; }
+        :root.dark-mode .counter { color: #ffebcd; }
         
         .warning-msg {
-            color: #a12d2d;
+            color: var(--warning-text);
             font-weight: 500;
-            background: #ffe1de;
+            background: var(--warning-bg);
             padding: 0.2rem 1rem;
             border-radius: 30px;
             transition: background 0.3s ease, color 0.3s ease;
         }
-        body.dark-mode .warning-msg {
-            background: #5a3a3a;
-            color: #ffb0a0;
-        }
         
         .step-limit {
             font-size: 0.9rem;
-            background: #d4dfe9;
+            background: var(--step-limit-bg);
             padding: 0.3rem 1rem;
             border-radius: 30px;
             transition: background 0.3s ease;
         }
-        body.dark-mode .step-limit { background: #4a5a6e; color: #ffebcd; }
         
         footer {
             font-size: 0.8rem;
-            color: #7b8c9d;
+            color: var(--footer-color);
             text-align: right;
             margin-top: 1.5rem;
-            border-top: 1px dashed #b5c8d9;
+            border-top: 1px dashed var(--footer-border);
             padding-top: 1rem;
             transition: color 0.3s ease, border-color 0.3s ease;
-        }
-        body.dark-mode footer {
-            color: #b0c4d9;
-            border-top-color: #5a6f84;
         }
 
         /* line highlight */
         .execution-line-indicator {
-            background: #2f4d2f;
-            color: #b9f5b9;
+            background: var(--line-highlight-bg);
+            color: var(--line-highlight-text);
             padding: 0.2rem 1rem;
             border-radius: 30px;
             font-weight: 600;
-            border: 1px solid #6ea86e;
+            border: 1px solid var(--line-highlight-border);
             font-family: monospace;
             max-width: 300px;
             overflow: hidden;
@@ -427,12 +452,37 @@
             white-space: nowrap;
             transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
-        body.dark-mode .execution-line-indicator {
-            background: #1e4a1e;
-            border-color: #ffd966;
-            color: #d0f0d0;
-        }
     </style>
+    <script>
+        (function() {
+            try {
+                // Check localStorage immediately - this runs BEFORE rendering
+                const savedDarkMode = localStorage.getItem('toyAssemblyDarkMode') === 'true';
+                
+                // Apply dark mode to :root element immediately
+                if (savedDarkMode) {
+                    document.documentElement.classList.add('dark-mode');
+                }
+                
+                // Make the toggle function globally available
+                window.toggleDarkMode = function() {
+                    const root = document.documentElement;
+                    const willBeDark = !root.classList.contains('dark-mode');
+                    
+                    if (willBeDark) {
+                        root.classList.add('dark-mode');
+                        localStorage.setItem('toyAssemblyDarkMode', 'true');
+                    } else {
+                        root.classList.remove('dark-mode');
+                        localStorage.setItem('toyAssemblyDarkMode', 'false');
+                    }
+                };
+            } catch (e) {
+                // localStorage might not be available, ignore
+                console.warn('localStorage not available', e);
+            }
+        })();
+    </script>
 </head>
 <body>
 <div class="container">
