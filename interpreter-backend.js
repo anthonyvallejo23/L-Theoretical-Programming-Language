@@ -7,7 +7,7 @@
 
     // ----- central state -----
     let sourceLines = [];               // raw lines (string)
-    let parsedInstructions = [];         // array of {lineNum, origLine, label, op, varName, targetLabel?}
+    let parsedInstructions = [];         // array of {lineNum, origLine, label, op, varName, targetLabel?, srcVar?}
     let labelToLine = new Map();         // label string -> line index (0‑based) – supports any label
 
     // variable stores
@@ -21,6 +21,11 @@
     let halted = false;
     let haltReason = '';
 
+    // macro switches (default all false)
+    let macroGoto = false;
+    let macroSetZero = false;
+    let macroCopy = false;
+
     // ----- grab UI elements (exported from frontend) -----
     const codeArea = document.getElementById('codeArea');
     const yDisplay = document.getElementById('y-display');
@@ -30,6 +35,67 @@
     const stepCounterSpan = document.getElementById('stepCounterDisplay');
     const xContainer = document.getElementById('x-inputs-container');
     const lineHighlightSpan = document.getElementById('lineHighlight');
+    const zDisplayContainer = document.getElementById('z-display-container');
+    
+    // macro checkboxes
+    const macroGotoCheck = document.getElementById('macroGoto');
+    const macroSetZeroCheck = document.getElementById('macroSetZero');
+    const macroCopyCheck = document.getElementById('macroCopy');
+
+    // collapsible macro panel elements
+    const macroHeader = document.getElementById('macroHeader');
+    const macroContent = document.getElementById('macroContent');
+    const macroArrow = document.getElementById('macroArrow');
+
+    // dark mode toggle
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    
+    // save button
+    const saveBtn = document.getElementById('saveBtn');
+
+    // ---------- dark mode ----------
+    function initDarkMode() {
+        // Check for saved preference
+        const savedDarkMode = localStorage.getItem('toyAssemblyDarkMode') === 'true';
+        if (savedDarkMode) {
+            document.body.classList.add('dark-mode');
+        }
+        
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('toyAssemblyDarkMode', document.body.classList.contains('dark-mode'));
+        });
+    }
+
+    // ---------- save to file ----------
+    function saveToFile() {
+        const code = codeArea.value;
+        const macroStates = {
+            goto: macroGotoCheck.checked,
+            setZero: macroSetZeroCheck.checked,
+            copy: macroCopyCheck.checked
+        };
+        
+        // Create header with metadata
+        const timestamp = new Date().toLocaleString();
+        const header = `; Toy Assembly Program\n; Saved: ${timestamp}\n; Macros: GOTO=${macroStates.goto}, SETZERO=${macroStates.setZero}, COPY=${macroStates.copy}\n; ${'='.repeat(40)}\n\n`;
+        
+        const content = header + code;
+        
+        // Create blob and download
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `toyprogram-${new Date().toISOString().slice(0,10)}.asm`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        // Brief feedback
+        alert('Program saved to file!');
+    }
 
     // ---------- helper: rebuild X inputs from X map ----------
     function rebuildXInputs() {
@@ -63,6 +129,28 @@
         });
     }
 
+    // ---------- rebuild Z display (badges) ----------
+    function rebuildZDisplay() {
+        if (Z.size === 0) {
+            zDisplayContainer.innerHTML = '<span style="color:#4a627a;">(none defined yet)</span>';
+            return;
+        }
+        
+        // Sort Z keys numerically
+        const zKeys = Array.from(Z.keys()).sort((a, b) => {
+            const numA = parseInt(a.substring(1)) || 0;
+            const numB = parseInt(b.substring(1)) || 0;
+            return numA - numB;
+        });
+        
+        let html = '';
+        zKeys.forEach(key => {
+            const val = Z.get(key) ?? 0;
+            html += `<div class="z-badge">${key} <span>${val}</span></div>`;
+        });
+        zDisplayContainer.innerHTML = html;
+    }
+
     // ---------- read current X from input fields into map ----------
     function updateXmapFromInputs() {
         const inputs = document.querySelectorAll('.x-field input[data-var]');
@@ -71,13 +159,6 @@
             const val = parseInt(inp.value, 10);
             X.set(key, isNaN(val) ? 0 : Math.max(0, val));
         });
-    }
-
-    // ---------- reset locals (Z, Y) ----------
-    function resetLocalsAndY() {
-        Z.clear();
-        Y = 0;
-        updateYdisplay();
     }
 
     // ---------- variable normalization ----------
@@ -91,10 +172,9 @@
     }
 
     // normalize label: we keep as-is (any alphanumeric, but common pattern A1, B2, ...)
-    // we no longer force A→A1; we accept any label exactly as written (case‑insensitive uppercase)
     function normalizeLabel(l) {
         if (!l) return l;
-        return l.toUpperCase();  // just uppercase, no default subscript
+        return l.toUpperCase();
     }
 
     // ---------- variable access ----------
@@ -107,12 +187,17 @@
 
     function setVar(name, val) {
         if (val < 0) val = 0;
-        if (name === 'Y') { Y = val; }
-        else if (name.startsWith('Z')) { Z.set(name, val); }
-        else if (name.startsWith('X')) { X.set(name, val); }
+        if (name === 'Y') { 
+            Y = val; 
+        } else if (name.startsWith('Z')) { 
+            Z.set(name, val); 
+            rebuildZDisplay(); // Update Z display whenever a Z changes
+        } else if (name.startsWith('X')) { 
+            X.set(name, val); 
+        }
     }
 
-    // ---------- parsing lines ----------
+    // ---------- parsing lines (with macro support and – for decrement) ----------
     function parseLines(lines) {
         const instructions = [];
         const labelMap = new Map();
@@ -128,7 +213,7 @@
             }
 
             let label = null;
-            // label pattern: any word inside brackets, e.g. [A1], [LOOP], [X99] – but we restrict to common style: letters and digits
+            // label pattern: any word inside brackets, e.g. [A1], [LOOP], [X99]
             const labelMatch = line.match(/^\s*\[([A-Za-z][A-Za-z0-9]*)\]\s*(.*)/);
             if (labelMatch) {
                 label = normalizeLabel(labelMatch[1]);
@@ -138,18 +223,49 @@
             let op = null;
             let varName = null;
             let targetLabel = null;
+            let srcVar = null; // for copy operation
 
-            // IF ... GOTO ...
+            // 1. IF ... GOTO ... (always enabled)
             const ifMatch = line.match(/^IF\s+([A-Z][0-9]*)\s*(!=|=\/=|≠)\s*0\s+GOTO\s+([A-Za-z][A-Za-z0-9]*)$/i);
             if (ifMatch) {
                 op = 'IF';
                 varName = normalizeVar(ifMatch[1]);
                 targetLabel = normalizeLabel(ifMatch[3]);
-            } else {
-                // increment/decrement: allow <- and < and ←
-                // pattern: V ARROW V + 1  or V ARROW V - 1
+            } 
+            // 2. GOTO / GO TO (macro, only if enabled)
+            else if (macroGoto) {
+                const gotoMatch = line.match(/^(GOTO|GO\s+TO)\s+([A-Za-z][A-Za-z0-9]*)$/i);
+                if (gotoMatch) {
+                    op = 'GOTO';
+                    targetLabel = normalizeLabel(gotoMatch[2]);
+                }
+            }
+            
+            // 3. V <- 0  (macro set zero)
+            if (!op && macroSetZero) {
+                const setZeroMatch = line.match(/^([A-Z][0-9]*)\s*(<-|←|<)\s*0$/);
+                if (setZeroMatch) {
+                    op = 'SETZERO';
+                    varName = normalizeVar(setZeroMatch[1]);
+                }
+            }
+            
+            // 4. V <- V'  (macro copy)
+            if (!op && macroCopy) {
+                const copyMatch = line.match(/^([A-Z][0-9]*)\s*(<-|←|<)\s*([A-Z][0-9]*)$/);
+                if (copyMatch && copyMatch[1] !== copyMatch[3]) { // avoid self-copy but we'll allow it as no-op
+                    op = 'COPY';
+                    varName = normalizeVar(copyMatch[1]);
+                    srcVar = normalizeVar(copyMatch[3]);
+                }
+            }
+            
+            // 5. Regular inc/dec (always enabled) - now supports both - and – for decrement
+            if (!op) {
+                // Increment: +1
                 const incMatch = line.match(/^([A-Z][0-9]*)\s*(<-|←|<)\s*\1\s*\+\s*1$/);
-                const decMatch = line.match(/^([A-Z][0-9]*)\s*(<-|←|<)\s*\1\s*-\s*1$/);
+                // Decrement: -1 or –1 (en dash)
+                const decMatch = line.match(/^([A-Z][0-9]*)\s*(<-|←|<)\s*\1\s*[-–]\s*1$/);
                 if (incMatch) {
                     op = 'INC';
                     varName = normalizeVar(incMatch[1]);
@@ -166,7 +282,8 @@
                     label: label,
                     op: op,
                     varName: varName,
-                    targetLabel: targetLabel
+                    targetLabel: targetLabel,
+                    srcVar: srcVar
                 };
                 instructions.push(instr);
                 if (label) {
@@ -186,6 +303,11 @@
             if (instr && instr.varName && instr.varName.startsWith('X')) {
                 if (!X.has(instr.varName)) {
                     X.set(instr.varName, 0);
+                }
+            }
+            if (instr && instr.srcVar && instr.srcVar.startsWith('X')) {
+                if (!X.has(instr.srcVar)) {
+                    X.set(instr.srcVar, 0);
                 }
             }
         }
@@ -211,12 +333,31 @@
 
         scanVariablesAndAddMissingX(parsedInstructions);
         rebuildXInputs();
+        rebuildZDisplay();
 
         PC = 0;
         stepsExecuted = 0;
         halted = false;
         haltReason = 'reset / ready';
         updateStatusAndY();
+    }
+
+    // ---------- get current line text for display ----------
+    function getCurrentLineText() {
+        if (halted || PC >= parsedInstructions.length) return '—';
+        
+        // Skip null instructions
+        let currentPC = PC;
+        while (currentPC < parsedInstructions.length && parsedInstructions[currentPC] === null) {
+            currentPC++;
+        }
+        if (currentPC >= parsedInstructions.length) return '—';
+        
+        const instr = parsedInstructions[currentPC];
+        if (!instr) return '—';
+        
+        // Return the original line, trimmed
+        return instr.origLine.trim() || '—';
     }
 
     // ---------- step one instruction ----------
@@ -250,15 +391,33 @@
         const instr = parsedInstructions[PC];
         let advancePC = true;
 
-        if (instr.op === 'INC') {
-            const cur = getVar(instr.varName);
-            setVar(instr.varName, cur + 1);
-        } else if (instr.op === 'DEC') {
-            const cur = getVar(instr.varName);
-            if (cur > 0) setVar(instr.varName, cur - 1);
-        } else if (instr.op === 'IF') {
-            const val = getVar(instr.varName);
-            if (val !== 0) {
+        switch (instr.op) {
+            case 'INC':
+                const curInc = getVar(instr.varName);
+                setVar(instr.varName, curInc + 1);
+                break;
+                
+            case 'DEC':
+                const curDec = getVar(instr.varName);
+                if (curDec > 0) setVar(instr.varName, curDec - 1);
+                break;
+                
+            case 'IF':
+                const val = getVar(instr.varName);
+                if (val !== 0) {
+                    const targetIdx = labelToLine.get(instr.targetLabel);
+                    if (targetIdx === undefined) {
+                        halted = true;
+                        haltReason = `missing label [${instr.targetLabel}] from GOTO`;
+                        updateStatusAndY();
+                        return { halted: true, reason: haltReason };
+                    }
+                    PC = targetIdx;
+                    advancePC = false;
+                }
+                break;
+                
+            case 'GOTO':
                 const targetIdx = labelToLine.get(instr.targetLabel);
                 if (targetIdx === undefined) {
                     halted = true;
@@ -268,7 +427,16 @@
                 }
                 PC = targetIdx;
                 advancePC = false;
-            }
+                break;
+                
+            case 'SETZERO':
+                setVar(instr.varName, 0);
+                break;
+                
+            case 'COPY':
+                const srcVal = getVar(instr.srcVar);
+                setVar(instr.varName, srcVal);
+                break;
         }
 
         if (advancePC) {
@@ -290,6 +458,7 @@
         yDisplay.textContent = Y;
         pcLabel.textContent = (halted ? '⏹' : '▶') + ' PC: ' + (PC < parsedInstructions.length ? PC : 'end');
         stepCounterSpan.textContent = `steps: ${stepsExecuted} / ${MAX_STEPS}`;
+        
         if (halted) {
             messageSpan.innerHTML = `⏸ halted: ${haltReason}`;
         } else {
@@ -297,32 +466,44 @@
         }
         warningMsgSpan.textContent = halted ? haltReason : '';
 
-        // highlight next line (if valid)
-        if (!halted && PC < parsedInstructions.length && parsedInstructions[PC] !== null) {
-            const nextLineNum = parsedInstructions[PC].lineNum + 1; // display 1‑based
-            lineHighlightSpan.textContent = `next line: ${nextLineNum}`;
+        // Show current line content (not just number)
+        if (!halted && PC < parsedInstructions.length) {
+            const lineText = getCurrentLineText();
+            lineHighlightSpan.textContent = `current line: ${lineText}`;
         } else {
-            lineHighlightSpan.textContent = `next line: —`;
+            lineHighlightSpan.textContent = `current line: —`;
         }
 
         // sync X fields with current X map values
         rebuildXInputs();
+        // Z display is updated via setVar, but call once more for safety
+        rebuildZDisplay();
     }
 
-    function updateYdisplay() {
-        yDisplay.textContent = Y;
+    // ---------- macro checkbox change handlers ----------
+    function updateMacrosFromCheckboxes() {
+        macroGoto = macroGotoCheck.checked;
+        macroSetZero = macroSetZeroCheck.checked;
+        macroCopy = macroCopyCheck.checked;
+        // No auto-reset - user must click reset to apply new macro settings
+    }
+
+    // ---------- collapsible macro panel ----------
+    function toggleMacroPanel() {
+        const isExpanded = macroContent.classList.contains('expanded');
+        if (isExpanded) {
+            macroContent.classList.remove('expanded');
+            macroArrow.classList.remove('expanded');
+        } else {
+            macroContent.classList.add('expanded');
+            macroArrow.classList.add('expanded');
+        }
     }
 
     // ---------- attach event listeners (UI bindings) ----------
     document.getElementById('resetProgramBtn').addEventListener('click', () => {
+        updateMacrosFromCheckboxes(); // read latest macro settings
         fullReset(true);
-    });
-
-    document.getElementById('clearStateBtn').addEventListener('click', () => {
-        updateXmapFromInputs();
-        resetLocalsAndY();
-        updateStatusAndY();
-        rebuildXInputs();
     });
 
     document.getElementById('stepBtn').addEventListener('click', () => {
@@ -335,18 +516,20 @@
 
     document.getElementById('runBtn').addEventListener('click', () => {
         if (halted) {
+            updateMacrosFromCheckboxes();
             fullReset(true);
         }
         while (!halted && stepsExecuted < MAX_STEPS) {
             stepOnce();
         }
-        // if stopped due to step limit, we already showed alert in stepOnce
         updateStatusAndY();
     });
 
+    // ---------- Save button ----------
+    saveBtn.addEventListener('click', saveToFile);
+
     // ---------- Add new X variable button ----------
     document.getElementById('addXBtn').addEventListener('click', () => {
-        // find the largest current X index
         let max = 0;
         for (let key of X.keys()) {
             if (key.startsWith('X')) {
@@ -362,16 +545,39 @@
         rebuildXInputs();
     });
 
+    // Individual macro checkboxes - just update internal state
+    [macroGotoCheck, macroSetZeroCheck, macroCopyCheck].forEach(cb => {
+        cb.addEventListener('change', updateMacrosFromCheckboxes);
+    });
+
+    // Collapsible macro panel toggle
+    macroHeader.addEventListener('click', toggleMacroPanel);
+
     // initial load
     window.addEventListener('load', () => {
-        // some default X values
+        // default X values
         X.set('X1', 2);
         X.set('X2', 0);
         X.set('X3', 0);
+        
+        // set default macros (all off)
+        macroGotoCheck.checked = false;
+        macroSetZeroCheck.checked = false;
+        macroCopyCheck.checked = false;
+        updateMacrosFromCheckboxes();
+        
         rebuildXInputs();
+        rebuildZDisplay();
         fullReset(true);
+        
+        // Initialize dark mode
+        initDarkMode();
+        
+        // Start with macro panel expanded (or collapsed - your choice)
+        macroContent.classList.add('expanded');
+        macroArrow.classList.add('expanded');
     });
 
     // expose some internals if needed (debug)
-    window.__toyDebug = { getState: () => ({ X, Z, Y, PC, halted, stepsExecuted }) };
+    window.__toyDebug = { getState: () => ({ X, Z, Y, PC, halted, stepsExecuted, macros: { macroGoto, macroSetZero, macroCopy } }) };
 })();
