@@ -53,20 +53,6 @@
     // save button
     const saveBtn = document.getElementById('saveBtn');
 
-    // ---------- dark mode ----------
-    function initDarkMode() {
-        // Check for saved preference
-        const savedDarkMode = localStorage.getItem('toyAssemblyDarkMode') === 'true';
-        if (savedDarkMode) {
-            document.body.classList.add('dark-mode');
-        }
-        
-        darkModeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            localStorage.setItem('toyAssemblyDarkMode', document.body.classList.contains('dark-mode'));
-        });
-    }
-
     // ---------- save to file ----------
     function saveToFile() {
         const code = codeArea.value;
@@ -553,6 +539,11 @@
     // Collapsible macro panel toggle
     macroHeader.addEventListener('click', toggleMacroPanel);
 
+    // Set up dark mode toggle using the global function
+    if (darkModeToggle && window.toggleDarkMode) {
+        darkModeToggle.addEventListener('click', window.toggleDarkMode);
+    }
+
     // initial load
     window.addEventListener('load', () => {
         // default X values
@@ -569,9 +560,6 @@
         rebuildXInputs();
         rebuildZDisplay();
         fullReset(true);
-        
-        // Initialize dark mode
-        initDarkMode();
         
         // Start with macro panel expanded (or collapsed - your choice)
         macroContent.classList.add('expanded');
