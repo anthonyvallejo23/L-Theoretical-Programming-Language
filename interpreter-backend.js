@@ -114,7 +114,7 @@
     // ---------- rebuild Z display (badges) ----------
     function rebuildZDisplay() {
         if (Z.size === 0) {
-            zDisplayContainer.innerHTML = '<span style="color:#4a627a;">(none defined yet)</span>';
+            zDisplayContainer.innerHTML = '<span style="color:--text-color-descriptor;">(none defined yet)</span>';
             return;
         }
 
