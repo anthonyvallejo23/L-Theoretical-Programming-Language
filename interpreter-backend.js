@@ -354,7 +354,7 @@
         if (stepsExecuted >= MAX_STEPS) {
             halted = true;
             haltReason = `step limit (${MAX_STEPS}) reached`;
-            alert(`⚠️ Step limit of ${MAX_STEPS} reached. Execution halted.`);
+            alert(`WARNING. Step limit of ${MAX_STEPS} reached. Execution aborted early.`);
             updateStatusAndY();
             return { halted: true, reason: haltReason };
         }
@@ -498,13 +498,28 @@
 
     document.getElementById('runBtn').addEventListener('click', () => {
         if (halted) {
+            if (stepsExecuted < MAX_STEPS) {
+                alert('Program halted. Press reset to reload.');
+            }
             updateMacrosFromCheckboxes();
             fullReset(true);
         }
+
+        let reachedLimit = false;
+
         while (!halted && stepsExecuted < MAX_STEPS) {
             stepOnce();
         }
+
+        if (stepsExecuted >= MAX_STEPS) {
+            reachedLimit = true;
+        }
+
         updateStatusAndY();
+
+        if (reachedLimit) {
+        alert(`WARNING. Step limit of ${MAX_STEPS} reached. Execution aborted early.`);
+        }
     });
 
     // ---------- Save button ----------
