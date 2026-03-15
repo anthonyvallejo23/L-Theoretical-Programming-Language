@@ -3,7 +3,7 @@
 
 (function () {
     // ----- constants -----
-    const MAX_STEPS = 1000;
+    const MAX_STEPS = 10000;
 
     // ----- central state -----
     let sourceLines = [];               // raw lines (string)
