@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Theoretical Programming Language</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' fill='%23ffffff'>ℒ</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' fill='%23808080'>ℒ</text></svg>">
     <style>
         * {
             box-sizing: border-box;
@@ -687,7 +687,7 @@
             <div class="toggle-slider"></div>
         </div>
 
-        <h1>𝕃 THEORETICAL PROGRAMMING LANGUAGE <span>X₁ X₂ … / Z₁ Z₂ … / Y</span></h1>
+        <h1>ℒ THEORETICAL PROGRAMMING LANGUAGE <span>X₁ X₂ … / Z₁ Z₂ … / Y</span></h1>
 
         <!-- Input & output panel -->
         <div class="io-grid">
@@ -736,11 +736,11 @@ IF X =/= 0 GOTO A</textarea>
         <!-- control buttons (including Save) -->
         <div class="button-bar">
             <button class="btn" id="resetProgramBtn">⟲ reset & load</button>
-            <button class="btn primary" id="runBtn">▶ run (max 1000 steps)</button>
+            <button class="btn primary" id="runBtn">▶ run (max 10000 steps)</button>
             <button class="btn" id="stepBtn">▷ step</button>
             <button class="btn" id="saveBtn">⤓ save to file</button>
             <span style="flex:1"></span>
-            <span class="step-limit" id="stepCounterDisplay">steps: 0 / 1000</span>
+            <span class="step-limit" id="stepCounterDisplay">steps: 0 / 10000</span>
         </div>
 
         <!-- status + PC + line highlight -->
@@ -782,7 +782,7 @@ IF X =/= 0 GOTO A</textarea>
             <div class="credits" id="credits">Created by: Anthony Vallejo<br>&#8203</div>
             <div class="credits" id="credits">Inspired by: Professor Ronald Fechter Ph.D</div>
 
-            <footer>✔ Halt: past last instruction / GOTO missing label · step limit 1000<br>&#8203<br>&#8203</footer>
+            <footer>✔ Halt: past last instruction / GOTO missing label · step limit 10000<br>&#8203<br>&#8203</footer>
         </div>
 
         <!-- Link to external backend (JavaScript) -->
