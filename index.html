@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Theoretical Programming Language</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' fill='%23ffffff'>ℒ</text></svg>">
     <style>
         * {
             box-sizing: border-box;
@@ -29,7 +30,7 @@
             --y-value: #2d4b65;
             --badge-bg: #2d4b65;
             --badge-text: white;
-            --badge-span-bg: #ffd966;
+            --badge-span-bg: #7fffd4;
             --badge-span-text: #1f374b;
             --status-bg: #dde2e8;
             --pc-badge-bg: #0f1c27;
@@ -460,7 +461,7 @@
             width: 18px;
             height: 18px;
             cursor: pointer;
-            accent-color: #b38f40;
+            accent-color: #40b3b3;
         }
 
         .macro-example {
@@ -729,7 +730,7 @@
       IF X =/= 0 GOTO A
 ">[A] X <- X - 1
 IF X =/= 0 GOTO A</textarea>
-            <div class="label-hint">⏺ Labels: A1, B2, C3... · Use &lt;- or &lt; for ← · != or =/= for ≠</div>
+            <div class="label-hint">⏺ Labels: A1, B2, C3... · Use &lt;- or &lt; for ← · Use != or =/= for ≠</div>
         </div>
 
         <!-- control buttons (including Save) -->
@@ -778,9 +779,10 @@ IF X =/= 0 GOTO A</textarea>
                 </div>
             </div>
 
-            <div class="credits" id="credits">Created by: Anthony Vallejo</div>
+            <div class="credits" id="credits">Created by: Anthony Vallejo<br>&#8203</div>
+            <div class="credits" id="credits">Inspired by: Professor Ronald Fechter Ph.D</div>
 
-            <footer>✔ Halt: past last instruction / GOTO missing label · step limit 1000</footer>
+            <footer>✔ Halt: past last instruction / GOTO missing label · step limit 1000<br>&#8203<br>&#8203</footer>
         </div>
 
         <!-- Link to external backend (JavaScript) -->
