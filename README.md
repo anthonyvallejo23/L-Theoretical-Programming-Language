@@ -157,7 +157,7 @@ Execution stops once `X` becomes `0`.
 
 - Dynamic creation of input variables (`+ Add X`)
 - Automatic creation of local variables (`Zₙ`)
-- Step limit protection (1000 steps)
+- Step limit protection (10000 steps)
 - Program export to file
 - Dark mode support
 
@@ -237,7 +237,7 @@ in any modern web browser.
 
 # Limitations
 
-- Maximum execution length: **1000 steps**
+- Maximum execution length: **10000 steps**
 - Variables are restricted to **non-negative integers**
 - Programs must follow strict syntax rules
 
